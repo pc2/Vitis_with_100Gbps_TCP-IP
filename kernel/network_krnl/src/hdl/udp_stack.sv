@@ -195,10 +195,17 @@ else begin
 
 assign s_axis_rx_data.ready = 1'b1;
 assign m_axis_tx_data.valid = 1'b0;
+assign m_axis_tx_data.data = '0;
+assign m_axis_tx_data.keep = '0;
+assign m_axis_tx_data.last = 1'b0;
 
 
 assign m_axis_udp_rx_metadata.valid = 1'b0;
+assign m_axis_udp_rx_metadata.data = '0;
 assign m_axis_udp_rx_data.valid = 1'b0;
+assign m_axis_udp_rx_data.data = '0;
+assign m_axis_udp_rx_data.keep = '0;
+assign m_axis_udp_rx_data.last = 1'b0;
 assign s_axis_udp_tx_metadata.ready = 1'b0;
 assign s_axis_udp_tx_data.ready = 1'b0;
 

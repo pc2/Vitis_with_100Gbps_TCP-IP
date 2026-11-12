@@ -1138,12 +1138,12 @@ always @(posedge net_clk) begin
             end
         end
         //udp
-        if (axis_udp_slice_to_udp.valid && axis_udp_slice_to_udp.ready) begin
+        if (UDP_EN && axis_udp_slice_to_udp.valid && axis_udp_slice_to_udp.ready) begin
             if (axis_udp_slice_to_udp.last) begin
                 udp_rx_pkg_counter <= udp_rx_pkg_counter + 1;
             end
         end
-        if (axis_udp_to_udp_slice.valid && axis_udp_to_udp_slice.ready) begin
+        if (UDP_EN && axis_udp_to_udp_slice.valid && axis_udp_to_udp_slice.ready) begin
             if (axis_udp_to_udp_slice.last) begin
                 udp_tx_pkg_counter <= udp_tx_pkg_counter + 1;
             end

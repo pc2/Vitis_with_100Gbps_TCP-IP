@@ -128,28 +128,27 @@ void rxAppMemAccessBreakdown(stream<mmCmd> &inputMemAccess, stream<mmCmd> &outpu
 
 	static bool rxAppBreakdown = false;
 	static mmCmd rxAppTempCmd;
-	static ap_uint<16> rxAppAccLength = 0;
+	static ap_uint<WINDOW_BITS> rxAppAccLength = 0;
 
 	if (rxAppBreakdown == false) {
 		if (!inputMemAccess.empty())
  		{
 			rxAppTempCmd = inputMemAccess.read();
-			if ((rxAppTempCmd.saddr.range(15, 0) + rxAppTempCmd.bbt) > 65536) {
-				rxAppAccLength = 65536 - rxAppTempCmd.saddr;
+			ap_uint<32> offset = rxAppTempCmd.saddr.range(WINDOW_BITS-1, 0);
+			if ((offset + rxAppTempCmd.bbt) > BUFFER_SIZE) {
+				rxAppAccLength = BUFFER_SIZE - offset;
 				outputMemAccess.write(mmCmd(rxAppTempCmd.saddr, rxAppAccLength));
 				rxAppBreakdown = true;
 			}
 			else
 				outputMemAccess.write(rxAppTempCmd);
-			//std::cerr << "Mem.Cmd: " << std::hex << rxAppTempCmd.saddr << " - " << rxAppTempCmd.bbt << std::endl;
 			rxAppDoubleAccess.write(rxAppBreakdown);
 		}
 	}
 	else if (rxAppBreakdown == true) {
-		rxAppTempCmd.saddr.range(15, 0) = 0;
+		rxAppTempCmd.saddr.range(WINDOW_BITS-1, 0) = 0;
 		rxAppAccLength = rxAppTempCmd.bbt - rxAppAccLength;
 		outputMemAccess.write(mmCmd(rxAppTempCmd.saddr, rxAppAccLength));
-		//std::cerr << "Mem.Cmd: " << std::hex << rxAppTempCmd.saddr << " - " << rxAppTempCmd.bbt - (65536 - rxAppTempCmd.saddr) << std::endl;
 		rxAppBreakdown = false;
 	}
 }

@@ -155,18 +155,10 @@ wire[71:0] axis_write_cmd_data [1:0];
 wire[71:0] axis_read_cmd_data [1:0];
 
  
-//quick fix of the read address alignment
-wire [31:0] rx_buffer_rd_addr = axis_read_cmd_data[ddrPortNetworkRx][63:32];
-wire [31:0] rx_buffer_rd_addr_shifted = rx_buffer_rd_addr << 8;
-wire [31:0] rx_buffer_wr_addr = axis_write_cmd_data[ddrPortNetworkRx][63:32];
-wire [31:0] rx_buffer_wr_addr_shifted = rx_buffer_wr_addr << 8;
-
 if (RX_DDR_BYPASS_EN == 0) begin
-    // assign m_axis_mem_write_cmd[ddrPortNetworkRx].address = {32'h0000_0000, axis_write_cmd_data[ddrPortNetworkRx][63:32]};
-    assign m_axis_mem_write_cmd[ddrPortNetworkRx].address = {32'h0000_0000, rx_buffer_wr_addr_shifted};
+    assign m_axis_mem_write_cmd[ddrPortNetworkRx].address = {32'h0000_0000, axis_write_cmd_data[ddrPortNetworkRx][63:32]};
     assign m_axis_mem_write_cmd[ddrPortNetworkRx].length = {9'h00, axis_write_cmd_data[ddrPortNetworkRx][22:0]};
-    // assign m_axis_mem_read_cmd[ddrPortNetworkRx].address = {32'h0000_0000, axis_read_cmd_data[ddrPortNetworkRx][63:32]};
-    assign m_axis_mem_read_cmd[ddrPortNetworkRx].address = {32'h0000_0000, rx_buffer_rd_addr_shifted};
+    assign m_axis_mem_read_cmd[ddrPortNetworkRx].address = {32'h0000_0000, axis_read_cmd_data[ddrPortNetworkRx][63:32]};
     assign m_axis_mem_read_cmd[ddrPortNetworkRx].length = {9'h00, axis_read_cmd_data[ddrPortNetworkRx][22:0]};
 end
 assign m_axis_mem_write_cmd[ddrPortNetworkTx].address = {32'h0000_0000, axis_write_cmd_data[ddrPortNetworkTx][63:32]};

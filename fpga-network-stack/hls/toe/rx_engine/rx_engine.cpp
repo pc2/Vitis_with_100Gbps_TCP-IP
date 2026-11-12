@@ -972,9 +972,9 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 						stream<bool>&							dropDataFifoOut,
 #if !(RX_DDR_BYPASS)
 						stream<mmCmd>&							rxBufferWriteCmd,
-						stream<appNotification>&				rxEng2rxApp_notification)
+						stream<rxAppNotification>&				rxEng2rxApp_notification)
 #else
-						stream<appNotification>&				rxEng2rxApp_notification,
+						stream<rxAppNotification>&				rxEng2rxApp_notification,
 						ap_uint<16>						rxbuffer_data_count,
 						ap_uint<16>						rxbuffer_max_data_count)
 #endif
@@ -1095,7 +1095,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 // 							rxBufferWriteCmd.write(mmCmd(pkgAddr, fsm_meta.meta.length));
 // #endif
 // 							// Only notify about  new data available
-// 							rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
+// 							rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
 // 							dropDataFifoOut.write(false);
 // 						}
 // 						else
@@ -1145,7 +1145,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 							//write to memory
 							rxBufferWriteCmd.write(mmCmd(pkgAddr, fsm_meta.meta.length));
 							// Notify app length bytes available
-							rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
+							rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
 							dropDataFifoOut.write(false);
 						}
 						// ### No gap, packet comes out-of-order
@@ -1166,7 +1166,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 							//update head and offset pointer, set gap to true
 							rxEng2rxSar_upd_req.write(rxSarRecvd(fsm_meta.sessionID, rxSar.recvd, newHead, newOffset, true));
 							//notification for matching the mem write status in notificationDelayer
-							rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, 0, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
+							rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, 0, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
 							//write to memory
 							rxBufferWriteCmd.write(mmCmd(pkgAddr, fsm_meta.meta.length));
 							dropDataFifoOut.write(false);
@@ -1190,7 +1190,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 							//write to memory
 							rxBufferWriteCmd.write(mmCmd(pkgAddr, fsm_meta.meta.length));
 							//notification for matching the mem write status in notificationDelayer
-							rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, 0, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
+							rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, 0, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
 							dropDataFifoOut.write(false);
 						}
 						// ### Gap alread exists, packet comes in-order after the recvd pointer
@@ -1213,7 +1213,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 								//write to memory
 								rxBufferWriteCmd.write(mmCmd(pkgAddr, fsm_meta.meta.length));
 								// Only notify about  new data available
-								rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, (rxSar.head - fsm_meta.meta.seqNumb)(WINDOW_BITS-1, 0), fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
+								rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, (rxSar.head - fsm_meta.meta.seqNumb)(WINDOW_BITS-1, 0), fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
 								dropDataFifoOut.write(false);
 							}
 							//gap can not be filled
@@ -1224,7 +1224,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 								//write to memory
 								rxBufferWriteCmd.write(mmCmd(pkgAddr, fsm_meta.meta.length));
 								// Only notify about  new data available
-								rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
+								rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
 								dropDataFifoOut.write(false);
 							}
 						}
@@ -1263,7 +1263,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 							pkgAddr(29, WINDOW_BITS) = fsm_meta.sessionID(13, 0);
 							pkgAddr(WINDOW_BITS-1, 0) = fsm_meta.meta.seqNumb(WINDOW_BITS-1, 0);
 							// Only notify about new data available
-							rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
+							rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort));
 							dropDataFifoOut.write(false);
 						}
 						else
@@ -1495,13 +1495,13 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 						rxBufferWriteCmd.write(mmCmd(pkgAddr, fsm_meta.meta.length));
 #endif
 						// Tell Application new data is available and connection got closed
-						rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort, true));
+						rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, fsm_meta.meta.length, fsm_meta.srcIpAddress, fsm_meta.dstIpPort, true));
 						dropDataFifoOut.write(false);
 					}
 					else if (tcpState == ESTABLISHED)
 					{
 						// Tell Application connection got closed
-						rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, fsm_meta.srcIpAddress, fsm_meta.dstIpPort, true)); //CLOSE
+						rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, fsm_meta.srcIpAddress, fsm_meta.dstIpPort, true)); //CLOSE
 					}
 
 					// Update state
@@ -1572,7 +1572,7 @@ void rxTcpFSM(			stream<rxFsmMetaData>&					fsmMetaDataFifo,
 						if (fsm_meta.meta.seqNumb == rxSar.recvd)
 						{
 							//tell application, RST occurred, abort
-							rxEng2rxApp_notification.write(appNotification(fsm_meta.sessionID, fsm_meta.srcIpAddress, fsm_meta.dstIpPort, true)); //RESET
+							rxEng2rxApp_notification.write(rxAppNotification(fsm_meta.sessionID, fsm_meta.srcIpAddress, fsm_meta.dstIpPort, true)); //RESET
 							rxEng2stateTable_upd_req.write(stateQuery(fsm_meta.sessionID, CLOSED, 1)); //TODO maybe some TIME_WAIT state
 							rxEng2timer_clearRetransmitTimer.write(rxRetransmitTimerUpdate(fsm_meta.sessionID, true));
 						}
@@ -1676,19 +1676,19 @@ void rxPackageDropper(stream<net_axis<WIDTH> >&		dataIn,
  *  @param[out]		notificationOut, outgoing notifications
  *  @TODO Handle unsuccessful write to memory
  */
-void rxAppNotificationDelayer(	stream<mmStatus>&				rxWriteStatusIn, stream<appNotification>&		internalNotificationFifoIn,
-								stream<appNotification>&		notificationOut, stream<ap_uint<1> > &doubleAccess) {
+void rxAppNotificationDelayer(	stream<mmStatus>&				rxWriteStatusIn, stream<rxAppNotification>&		internalNotificationFifoIn,
+								stream<rxAppNotification>&		notificationOut, stream<ap_uint<1> > &doubleAccess) {
 #pragma HLS INLINE off
 #pragma HLS pipeline II=1
 
-	static stream<appNotification> rand_notificationBuffer("rand_notificationBuffer");
+	static stream<rxAppNotification> rand_notificationBuffer("rand_notificationBuffer");
 	#pragma HLS STREAM variable=rand_notificationBuffer depth=32 //depends on memory delay
 	#pragma HLS aggregate  variable=rand_notificationBuffer compact=bit
 
 	static ap_uint<1>		rxAppNotificationDoubleAccessFlag = false;
 	static ap_uint<5>		rand_fifoCount = 0;
 	static mmStatus			rxAppNotificationStatus1, rxAppNotificationStatus2;
-	static appNotification	rxAppNotification;
+	static rxAppNotification	rxAppNotification;
 
 	if (rxAppNotificationDoubleAccessFlag == true) {
 		if(!rxWriteStatusIn.empty()) {
@@ -1738,6 +1738,30 @@ void rxAppNotificationDelayer(	stream<mmStatus>&				rxWriteStatusIn, stream<appN
 
 		}
 	}
+}
+
+void split_rx_notifications(hls::stream<rxAppNotification> &input,
+                            hls::stream<appNotification> &output)
+{
+#pragma HLS INLINE off
+#pragma HLS PIPELINE II=1
+    static rxAppNotification pending;
+    static bool active = false;
+    if (!active) {
+        if (input.read_nb(pending)) {
+            active = true;
+        }
+    } else {
+        bool final = pending.length <= 65535;
+        ap_uint<16> length = final ? ap_uint<16>(pending.length) : ap_uint<16>(65535);
+        output.write(appNotification(pending.sessionID, length, pending.ipAddress,
+                                     pending.dstPort, pending.closed && final));
+        if (final) {
+            active = false;
+        } else {
+            pending.length -= 65535;
+        }
+    }
 }
 
 void rxEventMerger(stream<extendedEvent>& in1, stream<event>& in2, stream<extendedEvent>& out)
@@ -1944,9 +1968,9 @@ void rx_engine(	stream<net_axis<WIDTH> >&					ipRxData,
 				stream<extendedEvent>&				rxEng2eventEng_setEvent,
 #if !(RX_DDR_BYPASS)
 				stream<mmCmd>&						rxBufferWriteCmd,
-				stream<appNotification>&			rxEng2rxApp_notification)
+				stream<rxAppNotification>&			rxEng2rxApp_notification)
 #else
-				stream<appNotification>&			rxEng2rxApp_notification,
+				stream<rxAppNotification>&			rxEng2rxApp_notification,
 				ap_uint<16>					rxbuffer_data_count,
 				ap_uint<16>					rxbuffer_max_data_count)
 #endif
@@ -2004,7 +2028,7 @@ void rx_engine(	stream<net_axis<WIDTH> >&					ipRxData,
 	#pragma HLS aggregate  variable=rxEng_metaHandlerDropFifo compact=bit
 	#pragma HLS aggregate  variable=rxEng_fsmDropFifo compact=bit
 
-	static stream<appNotification> rx_internalNotificationFifo("rx_internalNotificationFifo");
+	static stream<rxAppNotification> rx_internalNotificationFifo("rx_internalNotificationFifo");
 	#pragma HLS stream variable=rx_internalNotificationFifo depth=8 //This depends on the memory delay
 	#pragma HLS aggregate  variable=rx_internalNotificationFifo compact=bit
 
@@ -2163,9 +2187,9 @@ template void rx_engine<DATA_WIDTH>(	stream<net_axis<DATA_WIDTH> >&					ipRxData
 				stream<extendedEvent>&				rxEng2eventEng_setEvent,
 #if !(RX_DDR_BYPASS)
 				stream<mmCmd>&						rxBufferWriteCmd,
-				stream<appNotification>&			rxEng2rxApp_notification);
+				stream<rxAppNotification>&			rxEng2rxApp_notification);
 #else
-				stream<appNotification>&			rxEng2rxApp_notification,
+				stream<rxAppNotification>&			rxEng2rxApp_notification,
 				ap_uint<16>					rxbuffer_data_count,
 				ap_uint<16>					rxbuffer_max_data_count);
 #endif

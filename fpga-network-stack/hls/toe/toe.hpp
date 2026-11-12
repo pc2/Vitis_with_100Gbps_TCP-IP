@@ -116,6 +116,26 @@ struct appNotification
 };
 
 
+// Recovery counts cover a receive window, application notifications carry at most 65535 bytes.
+struct rxAppNotification
+{
+    ap_uint<16> sessionID;
+    ap_uint<32> length;
+    ap_uint<32> ipAddress;
+    ap_uint<16> dstPort;
+    bool closed;
+    rxAppNotification() {}
+    rxAppNotification(ap_uint<16> id, ap_uint<32> len, ap_uint<32> addr, ap_uint<16> port)
+        : sessionID(id), length(len), ipAddress(addr), dstPort(port), closed(false) {}
+    rxAppNotification(ap_uint<16> id, bool closed)
+        : sessionID(id), length(0), ipAddress(0), dstPort(0), closed(closed) {}
+    rxAppNotification(ap_uint<16> id, ap_uint<32> addr, ap_uint<16> port, bool closed)
+        : sessionID(id), length(0), ipAddress(addr), dstPort(port), closed(closed) {}
+    rxAppNotification(ap_uint<16> id, ap_uint<32> len, ap_uint<32> addr, ap_uint<16> port, bool closed)
+        : sessionID(id), length(len), ipAddress(addr), dstPort(port), closed(closed) {}
+};
+
+
 struct appReadRequest
 {
 	ap_uint<16> sessionID;

@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
 	stream<openStatus>					openConStatusOut; //TODO remove
 	stream<extendedEvent>				rxEng2eventEng_setEvent("rxEng2eventEng_setEvent");
 	stream<mmCmd>						rxBufferWriteCmd;
-	stream<appNotification>				rxEng2rxApp_notification;
+	stream<rxAppNotification>				rxEng2rxApp_notification;
 
 	std::ifstream inputFile;
 	std::ofstream outputFile;

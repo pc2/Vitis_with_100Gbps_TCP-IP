@@ -355,7 +355,7 @@ void rxAppWrapper(	stream<appReadRequest>&			appRxDataReq,
 					stream<rxSarAppd>&				rxSar2rxApp_upd_rsp,
 					stream<ap_uint<16> >&			appListenPortReq,
 					stream<bool>&					portTable2rxApp_listen_rsp,
-					stream<appNotification>&		rxEng2rxApp_notification,
+					stream<rxAppNotification>&		rxEng2rxApp_notification,
 					stream<appNotification>&		timer2rxApp_notification,
 					stream<ap_uint<16> >&			appRxDataRspMetadata,
 					stream<rxSarAppd>&				rxApp2rxSar_upd_req,
@@ -399,7 +399,10 @@ void rxAppWrapper(	stream<appReadRequest>&			appRxDataReq,
 
 		 	 	appListenPortRsp, rxApp2portTable_listen_req);
 
-	stream_merger(rxEng2rxApp_notification, timer2rxApp_notification, appNotification);
+	static stream<struct appNotification> rx_notification_chunks("rx_notification_chunks");
+    #pragma HLS stream variable=rx_notification_chunks depth=4
+    split_rx_notifications(rxEng2rxApp_notification, rx_notification_chunks);
+    stream_merger(rx_notification_chunks, timer2rxApp_notification, appNotification);
 }
 
 /** @defgroup tcp_module TCP Module
@@ -620,7 +623,7 @@ void toe(	// Data & Memory Interface
 	#pragma HLS stream variable=conEstablishedFifo depth=4
 	#pragma HLS aggregate variable=conEstablishedFifo compact=bit
 
-	static stream<appNotification> 			rxEng2rxApp_notification("rxEng2rxApp_notification");
+	static stream<rxAppNotification> 			rxEng2rxApp_notification("rxEng2rxApp_notification");
 	static stream<appNotification>			timer2rxApp_notification("timer2rxApp_notification");
 	static stream<openStatus>				timer2txApp_notification("timer2txApp_notification");
 	#pragma HLS stream variable=rxEng2rxApp_notification		depth=4

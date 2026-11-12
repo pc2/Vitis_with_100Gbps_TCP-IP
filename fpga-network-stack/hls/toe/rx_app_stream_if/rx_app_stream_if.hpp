@@ -37,7 +37,8 @@ void rx_app_stream_if(	hls::stream<appReadRequest>&	appRxDataReq,
 						hls::stream<ap_uint<16> >&		appRxDataRspMetadata,
 						hls::stream<rxSarAppd>&			rxApp2rxSar_upd_req,
 #if !(RX_DDR_BYPASS)
-						hls::stream<mmCmd>&				rxBufferReadCmd);
+						hls::stream<mmCmd>&				rxBufferReadCmd,
+						hls::stream<ap_uint<1> >&		rxReadComplete);
 #else
 						stream<ap_uint<1> >&		rxBufferReadCmd);
 #endif

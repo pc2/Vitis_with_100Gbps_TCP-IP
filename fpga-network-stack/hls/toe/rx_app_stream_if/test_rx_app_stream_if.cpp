@@ -39,6 +39,7 @@ int main()
 	stream<ap_uint<16> >		appRxDataRspMetadata;
 	stream<rxSarAppd>			rxApp2rxSar_upd_req;
 	stream<mmCmd>				rxBufferReadCmd;
+	stream<ap_uint<1> > rxReadComplete;
 
 	rxSarAppd req;
 	mmCmd cmd;
@@ -51,7 +52,7 @@ int main()
 							rxSar2rxApp_upd_rsp,
 							appRxDataRspMetadata,
 							rxApp2rxSar_upd_req,
-							rxBufferReadCmd);
+							rxBufferReadCmd, rxReadComplete);
 		if (!rxApp2rxSar_upd_req.empty())
 		{
 			rxApp2rxSar_upd_req.read(req);
@@ -65,6 +66,7 @@ int main()
 		if (!rxBufferReadCmd.empty())
 		{
 			rxBufferReadCmd.read(cmd);
+			rxReadComplete.write(1);
 			std::cout << "Cmd: " << cmd.saddr << std::endl;
 		}
 		if (!appRxDataRspMetadata.empty())

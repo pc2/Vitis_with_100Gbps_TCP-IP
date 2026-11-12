@@ -45,7 +45,8 @@ void rx_app_stream_if(hls::stream<appReadRequest>&		appRxDataReq,
 					  hls::stream<ap_uint<16> >&		appRxDataRspMetadata,
 					  hls::stream<rxSarAppd>&			rxApp2rxSar_upd_req,
 #if !(RX_DDR_BYPASS)
-					  hls::stream<mmCmd>&				rxBufferReadCmd)
+					  hls::stream<mmCmd>&				rxBufferReadCmd,
+					  hls::stream<ap_uint<1> >&		rxReadComplete)
 #else
 					  stream<ap_uint<1> >&			rxBufferReadCmd)
 #endif
@@ -54,9 +55,72 @@ void rx_app_stream_if(hls::stream<appReadRequest>&		appRxDataReq,
 	#pragma HLS INLINE off
 
 
-	static ap_uint<16>				rasi_readLength;
-	static ap_uint<1>				rasi_fsmState 	= 0;
-
+#if !(RX_DDR_BYPASS)
+	static ap_uint<3> rasi_fsmState = 0;
+	static appReadRequest rasi_request;
+	static bool rasi_hasData;
+	static rxSarAppd rasi_reply;
+	static ap_uint<WINDOW_BITS> rasi_nextPointer;
+	switch (rasi_fsmState)
+	{
+		case 0:
+		{
+			appReadRequest request;
+			if (appRxDataReq.read_nb(request)) {
+				rasi_request = request;
+				rasi_fsmState = 1;
+			}
+			break;
+		}
+		case 1:
+			rasi_hasData = rasi_request.length != 0;
+			rasi_fsmState = 2;
+			break;
+		case 2:
+			if (rasi_hasData) {
+				rxApp2rxSar_upd_req.write(rxSarAppd(rasi_request.sessionID));
+				rasi_fsmState = 3;
+			} else {
+				rasi_fsmState = 0;
+			}
+			break;
+		case 3:
+		{
+			rxSarAppd reply;
+			if (rxSar2rxApp_upd_rsp.read_nb(reply)) {
+				rasi_reply = reply;
+				rasi_fsmState = 4;
+			}
+			break;
+		}
+		case 4:
+		{
+			appRxDataRspMetadata.write(rasi_reply.sessionID);
+			ap_uint<32> address = 0;
+			address(29, WINDOW_BITS) = rasi_reply.sessionID(13, 0);
+			address(WINDOW_BITS-1, 0) = rasi_reply.appd;
+			rxBufferReadCmd.write(mmCmd(address, rasi_request.length));
+			rasi_fsmState = 5;
+			break;
+		}
+		case 5:
+			rasi_nextPointer = rasi_reply.appd + rasi_request.length;
+			rasi_fsmState = 6;
+			break;
+		case 6:
+		{
+			ap_uint<1> complete;
+			if (rxReadComplete.read_nb(complete)) rasi_fsmState = 7;
+			break;
+		}
+		case 7:
+			rxApp2rxSar_upd_req.write(rxSarAppd(rasi_reply.sessionID, rasi_nextPointer));
+			rasi_fsmState = 0;
+			break;
+	}
+#else
+	static ap_uint<16> rasi_readLength;
+	static ap_uint<1> rasi_fsmState = 0;
 	switch (rasi_fsmState)
 	{
 		case 0:
@@ -78,18 +142,11 @@ void rx_app_stream_if(hls::stream<appReadRequest>&		appRxDataReq,
 			{
 				rxSarAppd	rxSar = rxSar2rxApp_upd_rsp.read();
 				appRxDataRspMetadata.write(rxSar.sessionID);
-#if !(RX_DDR_BYPASS)
-				ap_uint<32> pkgAddr = 0;
-				pkgAddr(29, WINDOW_BITS) = rxSar.sessionID(13, 0);
-				pkgAddr(WINDOW_BITS-1, 0) = rxSar.appd;
-				rxBufferReadCmd.write(mmCmd(pkgAddr, rasi_readLength));
-#else
 				rxBufferReadCmd.write(1);
-#endif
-				// Update app read pointer
-				rxApp2rxSar_upd_req.write(rxSarAppd(rxSar.sessionID, rxSar.appd+rasi_readLength)); // Update me
+				rxApp2rxSar_upd_req.write(rxSarAppd(rxSar.sessionID, rxSar.appd+rasi_readLength));
 				rasi_fsmState = 0;
 			}
 			break;
 	}
+#endif
 }

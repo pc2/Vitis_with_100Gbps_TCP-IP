@@ -154,6 +154,20 @@ void rxAppMemAccessBreakdown(stream<mmCmd> &inputMemAccess, stream<mmCmd> &outpu
 }
 
 #if !(RX_DDR_BYPASS)
+template <int WIDTH>
+void rxAppReadCompletion(stream<net_axis<WIDTH> >& input,
+                         stream<net_axis<WIDTH> >& output,
+                         stream<ap_uint<1> >& completion)
+{
+#pragma HLS PIPELINE II=1
+#pragma HLS INLINE off
+    if (!input.empty()) {
+        net_axis<WIDTH> word = input.read();
+        output.write(word);
+        if (word.last) completion.write(1);
+    }
+}
+
 template <int WIDTH> 
 void rxAppMemDataRead(	stream<net_axis<WIDTH> >&	rxBufferReadData,
 						stream<net_axis<WIDTH> >&	rxDataRsp,
@@ -383,10 +397,15 @@ void rxAppWrapper(	stream<appReadRequest>&			appRxDataReq,
 
 	 // RX Application Stream Interface
 #if !(RX_DDR_BYPASS)
+	static stream<ap_uint<1> > rxReadComplete("rxReadComplete");
+	static stream<net_axis<WIDTH> > rxReadResponse("rxReadResponse");
+	#pragma HLS stream variable=rxReadComplete depth=2
+	#pragma HLS stream variable=rxReadResponse depth=4
 	rx_app_stream_if(appRxDataReq, rxSar2rxApp_upd_rsp, appRxDataRspMetadata,
-						rxApp2rxSar_upd_req, rxAppStreamIf2memAccessBreakdown);
+						rxApp2rxSar_upd_req, rxAppStreamIf2memAccessBreakdown, rxReadComplete);
 	rxAppMemAccessBreakdown(rxAppStreamIf2memAccessBreakdown, rxBufferReadCmd, rxAppDoubleAccess);
-	rxAppMemDataRead<WIDTH>(rxBufferReadData, rxDataRsp, rxAppDoubleAccess);
+	rxAppMemDataRead<WIDTH>(rxBufferReadData, rxReadResponse, rxAppDoubleAccess);
+	rxAppReadCompletion<WIDTH>(rxReadResponse, rxDataRsp, rxReadComplete);
 #else
 	rx_app_stream_if(appRxDataReq, rxSar2rxApp_upd_rsp, appRxDataRspMetadata,
 						rxApp2rxSar_upd_req, rxBufferReadCmd);
